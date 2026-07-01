@@ -47,12 +47,8 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
-      - name: Build frontend
-        run: npm run build
-
       - name: Build portable executable
-        working-directory: src-tauri
-        run: cargo build --release --target ${{ matrix.target }}
+        run: npm run tauri build -- --target ${{ matrix.target }} --no-bundle
 
       - name: Package portable zip
         shell: pwsh
