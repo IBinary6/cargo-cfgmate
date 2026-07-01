@@ -421,7 +421,7 @@ function App() {
       <div className="sidebar" style={{ position: "relative", paddingBottom: 100 }}>
         <div style={{ padding: "0 20px 20px", borderBottom: "1px solid var(--border-color)" }}>
           <h1 style={{ fontSize: "16px", fontWeight: 600, color: "var(--accent-cyan)" }}>
-            Cargo Assistant
+            Cargo CfgMate
           </h1>
           <p style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: 4 }}>
             Rust 配置助手 v1.0.0

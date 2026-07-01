@@ -1,7 +1,7 @@
 # Project Context
 
 ## Purpose
-QuickChangeRustInfo 是基于 Tauri 2 + React + TypeScript 的桌面工具，用于图形化管理 Rust Cargo 配置（`~/.cargo/config.toml`）。核心目标是降低配置门槛、提升下载与构建效率，并确保不破坏用户已有配置。
+Cargo CfgMate 是基于 Tauri 2 + React + TypeScript 的桌面工具，用于图形化管理 Rust Cargo 配置（`~/.cargo/config.toml`）。核心目标是降低配置门槛、提升下载与构建效率，并确保不破坏用户已有配置。
 
 ## Tech Stack
 - 前端：React 19、TypeScript、Vite 7、Tailwind CSS

@@ -1,8 +1,8 @@
-# Cargo Assistant (Rust 配置助手)
+# Cargo CfgMate (Rust 配置助手)
 
 <div align="center">
   <img src="./show/icon.png" width="128" height="128" />
-  <h1>Cargo Assistant</h1>
+  <h1>Cargo CfgMate</h1>
   <p>
     一个现代化的、跨平台的图形界面工具，用于轻松管理 Cargo 配置 (<code>~/.cargo/config.toml</code>)。
   </p>
@@ -46,7 +46,7 @@
 
 ### 方式一：下载发布版 (Windows)
 
-1. 前往 [Releases](https://github.com/yourusername/cargo-assistant/releases) 页面下载最新版安装包或可执行文件。
+1. 前往 [Releases](https://github.com/yourusername/cargo-cfgmate/releases) 页面下载最新版安装包或可执行文件。
 2. 双击运行即可。
 
 ### 方式二：从源码编译
@@ -55,8 +55,8 @@
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/yourusername/cargo-assistant.git
-cd cargo-assistant
+git clone https://github.com/yourusername/cargo-cfgmate.git
+cd cargo-cfgmate
 
 # 2. 安装前端依赖
 npm install

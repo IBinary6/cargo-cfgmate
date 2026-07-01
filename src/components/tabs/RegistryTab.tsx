@@ -45,6 +45,7 @@ export function RegistryTab({
   const [rustupLastWrite, setRustupLastWrite] = useState<{ dist: string | null; root: string | null } | null>(null);
   const [rustupSystemError, setRustupSystemError] = useState<string | null>(null);
   const [showSystemErrorDetail, setShowSystemErrorDetail] = useState(false);
+  const [rustupScope, setRustupScope] = useState<"user" | "user_and_system">("user");
 
   const isAdmin = !!adminStatus?.is_admin;
   const adminHint = adminStatus?.hint || "";
@@ -117,6 +118,12 @@ export function RegistryTab({
     loadRustupStatus();
   }, []);
 
+  useEffect(() => {
+    if (!isAdmin && rustupScope === "user_and_system") {
+      setRustupScope("user");
+    }
+  }, [isAdmin, rustupScope]);
+
   const distUser = rustupStatus?.dist.user.value;
   const distSystem = rustupStatus?.dist.system.value;
   const rootUser = rustupStatus?.root.user.value;
@@ -135,10 +142,16 @@ export function RegistryTab({
     return found ? found.id : "custom";
   })();
 
-  const applyRustupEnv = async (dist: string | null, root: string | null, successMessage: string) => {
+  const applyRustupEnv = async (
+    dist: string | null,
+    root: string | null,
+    successMessage: string,
+    scopeOverride?: "user" | "user_and_system"
+  ) => {
     setRustupWriting(true);
     try {
-      const result = await invoke<RustupEnvWriteResult>("set_rustup_env", { dist, root });
+      const scope = scopeOverride || rustupScope;
+      const result = await invoke<RustupEnvWriteResult>("set_rustup_env", { dist, root, scope });
       const systemSkipped = !!result.system.skipped;
       setRustupLastWrite({ dist, root });
       if (!result.user.ok) {
@@ -174,9 +187,9 @@ export function RegistryTab({
     if (!mirror) return;
     const dist = mirrorId === "official" ? null : mirror.dist;
     const root = mirrorId === "official" ? null : mirror.root;
-    const confirmMessage = isAdmin
+    const confirmMessage = rustupScope === "user_and_system" && isAdmin
       ? `即将修改 Rustup 镜像为 ${mirror.name}。\n将同时写入用户级与系统级环境变量。\n是否继续？`
-      : `当前为普通权限，仅写入用户级环境变量。\n系统级修改需要管理员权限。\n是否继续？`;
+      : `即将修改 Rustup 镜像为 ${mirror.name}。\n默认仅写入当前用户级环境变量。\n是否继续？`;
     const confirmed = await confirmAction({
       title: "修改 Rustup 镜像",
       message: confirmMessage,
@@ -209,7 +222,7 @@ export function RegistryTab({
       tone: "warning"
     });
     if (!confirmed) return;
-    await applyRustupEnv(dist, root, "已统一 Rustup 配置");
+    await applyRustupEnv(dist, root, "已统一 Rustup 配置", toUser ? "user" : "user_and_system");
   };
 
   const retryRustupSystem = async () => {
@@ -230,7 +243,8 @@ export function RegistryTab({
     try {
       const result = await invoke<RustupEnvWriteResult>("set_rustup_env", {
         dist: rustupLastWrite.dist,
-        root: rustupLastWrite.root
+        root: rustupLastWrite.root,
+        scope: "user_and_system"
       });
       if (!result.system.ok) {
         const err = sanitizeError(result.system.error) || "系统级未生效";
@@ -316,6 +330,27 @@ export function RegistryTab({
                     </button>
                   );
                 })}
+             </div>
+             <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 12 }}>
+               <span style={{ color: "var(--text-secondary)" }}>作用范围</span>
+               <button
+                 className={`btn btn-sm ${rustupScope === "user" ? "btn-primary" : "btn-secondary"}`}
+                 onClick={() => setRustupScope("user")}
+                 disabled={rustupWriting}
+               >
+                 用户级
+               </button>
+               <button
+                 className={`btn btn-sm ${rustupScope === "user_and_system" ? "btn-primary" : "btn-secondary"}`}
+                 onClick={() => setRustupScope("user_and_system")}
+                 disabled={!isAdmin || rustupWriting}
+                 title={isAdmin ? "同时写入用户级与系统级环境变量" : "需要管理员权限"}
+               >
+                 用户+系统
+               </button>
+               <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>
+                 默认只改当前用户
+               </span>
              </div>
              <div style={{ marginTop: 10, fontSize: 12, color: "var(--text-secondary)" }}>
                {activeRustup === "custom" && (distEffective || rootEffective) && (

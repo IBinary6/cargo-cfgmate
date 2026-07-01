@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Cargo Assistant",
+  "productName": "Cargo CfgMate",
   "version": "1.0.0",
-  "identifier": "com.github.cargo-assistant",
+  "identifier": "com.github.cargo-cfgmate",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Cargo Assistant - Rust 配置助手",
+        "title": "Cargo CfgMate - Rust 配置助手",
         "width": 1000,
         "height": 700,
         "minWidth": 900,

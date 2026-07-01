@@ -192,8 +192,12 @@ async fn get_rustup_env_status() -> Result<RustupEnvStatus, String> {
 }
 
 #[tauri::command]
-async fn set_rustup_env(dist: Option<String>, root: Option<String>) -> Result<RustupEnvWriteResult, String> {
-    tauri::async_runtime::spawn_blocking(move || config::set_rustup_env(dist, root))
+async fn set_rustup_env(
+    dist: Option<String>,
+    root: Option<String>,
+    scope: Option<String>,
+) -> Result<RustupEnvWriteResult, String> {
+    tauri::async_runtime::spawn_blocking(move || config::set_rustup_env(dist, root, scope))
         .await
         .map_err(|e| e.to_string())
 }

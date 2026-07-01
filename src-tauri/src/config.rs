@@ -384,15 +384,33 @@ fn atomic_write(path: &Path, content: &str) -> Result<(), String> {
         .map(|d| d.as_millis())
         .unwrap_or(0);
     let tmp_path = dir.join(format!(".config.tmp-{}", stamp));
+    let backup_path = dir.join(format!(".config.bak-{}", stamp));
     fs::write(&tmp_path, content).map_err(|e| format!("Failed to write temp file: {}", e))?;
     match fs::rename(&tmp_path, path) {
         Ok(_) => Ok(()),
         Err(err) => {
             if path.exists() {
-                let _ = fs::remove_file(path);
+                fs::rename(path, &backup_path)
+                    .map_err(|e| {
+                        let _ = fs::remove_file(&tmp_path);
+                        format!("Failed to move original config aside: {} (original: {})", e, err)
+                    })?;
             }
-            fs::rename(&tmp_path, path)
-                .map_err(|e| format!("Failed to replace config: {} (original: {})", e, err))
+            match fs::rename(&tmp_path, path) {
+                Ok(_) => {
+                    if backup_path.exists() {
+                        let _ = fs::remove_file(&backup_path);
+                    }
+                    Ok(())
+                }
+                Err(e) => {
+                    if backup_path.exists() {
+                        let _ = fs::rename(&backup_path, path);
+                    }
+                    let _ = fs::remove_file(&tmp_path);
+                    Err(format!("Failed to replace config: {} (original: {})", e, err))
+                }
+            }
         }
     }
 }
@@ -726,7 +744,7 @@ fn write_env_file(path: &Path, dist: Option<&str>, root: Option<&str>) -> Result
         }
     }
     let mut content = String::new();
-    content.push_str("# Managed by QuickChangeRustInfo\n");
+    content.push_str("# Managed by Cargo CfgMate\n");
     let exports = build_export_lines(dist, root);
     if !exports.is_empty() {
         content.push_str(&exports);
@@ -1179,16 +1197,25 @@ fn set_process_rustup_env(dist: Option<&str>, root: Option<&str>) {
     }
 }
 
-pub fn set_rustup_env(dist: Option<String>, root: Option<String>) -> RustupEnvWriteResult {
+pub fn set_rustup_env(
+    dist: Option<String>,
+    root: Option<String>,
+    scope: Option<String>,
+) -> RustupEnvWriteResult {
     let dist = normalize_env_value(dist);
     let root = normalize_env_value(root);
     let user: RustupEnvWriteOutcome;
     let system: RustupEnvWriteOutcome;
     let is_admin = is_admin();
+    let should_write_system = match scope.as_deref() {
+        Some("user") => false,
+        Some("user_and_system") => is_admin,
+        _ => is_admin,
+    };
 
     #[cfg(target_os = "windows")]
     {
-        if is_admin {
+        if should_write_system {
             match write_windows_env_all(dist.as_deref(), root.as_deref()) {
                 Ok(result) => {
                     user = RustupEnvWriteOutcome {
@@ -1230,7 +1257,7 @@ pub fn set_rustup_env(dist: Option<String>, root: Option<String>) -> RustupEnvWr
             Ok(_) => RustupEnvWriteOutcome { ok: true, error: None, skipped: false },
             Err(err) => RustupEnvWriteOutcome { ok: false, error: Some(err), skipped: false },
         };
-        system = if is_admin {
+        system = if should_write_system {
             match write_macos_system_env(dist.as_deref(), root.as_deref()) {
                 Ok(_) => RustupEnvWriteOutcome { ok: true, error: None, skipped: false },
                 Err(err) => RustupEnvWriteOutcome { ok: false, error: Some(err), skipped: false },
@@ -1250,7 +1277,7 @@ pub fn set_rustup_env(dist: Option<String>, root: Option<String>) -> RustupEnvWr
             Ok(_) => RustupEnvWriteOutcome { ok: true, error: None, skipped: false },
             Err(err) => RustupEnvWriteOutcome { ok: false, error: Some(err), skipped: false },
         };
-        system = if is_admin {
+        system = if should_write_system {
             match write_unix_system_env(dist.as_deref(), root.as_deref()) {
                 Ok(_) => RustupEnvWriteOutcome { ok: true, error: None, skipped: false },
                 Err(err) => RustupEnvWriteOutcome { ok: false, error: Some(err), skipped: false },

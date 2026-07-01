@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-QuickChangeRustInfo 是一个基于 Tauri 2 + React + TypeScript 开发的 Rust Cargo 配置管理工具。提供图形化界面来管理 `~/.cargo/config.toml`，支持下载源镜像切换、编译优化、工具链管理、链接器配置、环境变量和网络设置。
+Cargo CfgMate 是一个基于 Tauri 2 + React + TypeScript 开发的 Rust Cargo 配置管理工具。提供图形化界面来管理 `~/.cargo/config.toml`，支持下载源镜像切换、编译优化、工具链管理、链接器配置、环境变量和网络设置。
 
 ## 技术栈
 
