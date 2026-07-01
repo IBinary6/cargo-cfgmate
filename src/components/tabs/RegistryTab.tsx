@@ -19,10 +19,10 @@ interface Props {
 
 const RUSTUP_MIRRORS = [
   { id: "official", name: "Official (官方)", dist: "", root: "" },
-  { id: "ustc", name: "USTC (中科大)", dist: "https://mirrors.ustc.edu.cn/rustup", root: "https://mirrors.ustc.edu.cn/rustup" },
-  { id: "tuna", name: "TUNA (清华)", dist: "https://mirrors.tuna.tsinghua.edu.cn/rustup", root: "https://mirrors.tuna.tsinghua.edu.cn/rustup" },
+  { id: "ustc", name: "USTC (中科大)", dist: "https://mirrors.ustc.edu.cn/rust-static", root: "https://mirrors.ustc.edu.cn/rust-static/rustup" },
+  { id: "tuna", name: "TUNA (清华)", dist: "https://mirrors.tuna.tsinghua.edu.cn/rustup", root: "https://mirrors.tuna.tsinghua.edu.cn/rustup/rustup" },
   { id: "sjtu", name: "SJTU (上交)", dist: "https://mirrors.sjtug.sjtu.edu.cn/rust-static", root: "https://mirrors.sjtug.sjtu.edu.cn/rust-static/rustup" },
-  { id: "rsproxy", name: "Rsproxy (字节)", dist: "https://rsproxy.cn/rustup", root: "https://rsproxy.cn/rustup" },
+  { id: "rsproxy", name: "Rsproxy (字节)", dist: "https://rsproxy.cn", root: "https://rsproxy.cn/rustup" },
 ];
 
 export function RegistryTab({

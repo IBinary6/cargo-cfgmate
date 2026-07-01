@@ -35,3 +35,5 @@ bun.lock
 .opencode/command/openspec-apply.md
 .opencode/command/openspec-archive.md
 .opencode/command/openspec-proposal.md
+# Added by code-review-graph
+.code-review-graph/

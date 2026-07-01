@@ -111,6 +111,8 @@ pub struct SourceEntry {
     pub registry: Option<String>,
     #[serde(rename = "replace-with")]
     pub replace_with: Option<String>,
+    #[serde(flatten)]
+    pub other: HashMap<String, toml::Value>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]

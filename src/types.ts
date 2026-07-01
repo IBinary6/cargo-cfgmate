@@ -1,6 +1,7 @@
 export interface SourceEntry {
     registry?: string;
     "replace-with"?: string;
+    [key: string]: any;
 }
 
 export interface RegistryConfig {

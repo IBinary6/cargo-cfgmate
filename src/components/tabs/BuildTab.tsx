@@ -29,16 +29,16 @@ export function BuildTab({ config, setConfig, profileType, setProfileType }: Pro
     } else if (preset === "fastest" && profileType === "release") {
       newProfile = {
         "opt-level": "3",
-        lto: "true",
+        lto: true,
         "codegen-units": 1,
-        strip: "true",
+        strip: "symbols",
       };
     } else if (preset === "smallest" && profileType === "release") {
       newProfile = {
         "opt-level": "z",
-        lto: "true",
+        lto: true,
         "codegen-units": 1,
-        strip: "true",
+        strip: "symbols",
         panic: "abort",
         "trim-paths": "all",
       };
@@ -46,7 +46,7 @@ export function BuildTab({ config, setConfig, profileType, setProfileType }: Pro
       newProfile = {
         "opt-level": "s",
         lto: "thin",
-        strip: "true",
+        strip: "symbols",
         panic: "abort",
         "codegen-units": 16,
       };
@@ -65,16 +65,16 @@ export function BuildTab({ config, setConfig, profileType, setProfileType }: Pro
     if (!profile || Object.keys(profile).length === 0) return "default";
 
     if (profileType === "release") {
-      if (profile["opt-level"] === "3" && profile.lto === "true" && 
-          profile["codegen-units"] === 1 && profile.strip === "true" &&
+      if (profile["opt-level"] === "3" && profile.lto === true &&
+          profile["codegen-units"] === 1 && profile.strip === "symbols" &&
           !profile.panic && !profile["trim-paths"]) return "fastest";
       
-      if (profile["opt-level"] === "z" && profile.lto === "true" && 
-          profile["codegen-units"] === 1 && profile.strip === "true" &&
+      if (profile["opt-level"] === "z" && profile.lto === true &&
+          profile["codegen-units"] === 1 && profile.strip === "symbols" &&
           profile.panic === "abort" && profile["trim-paths"] === "all") return "smallest";
       
-      if (profile["opt-level"] === "s" && profile.lto === "thin" && 
-          profile.strip === "true" && profile.panic === "abort" &&
+      if (profile["opt-level"] === "s" && profile.lto === "thin" &&
+          profile.strip === "symbols" && profile.panic === "abort" &&
           profile["codegen-units"] === 16 && !profile["trim-paths"]) return "balanced";
     } else if (profileType === "dev" && profile["opt-level"] === "0" && Object.keys(profile).length === 1) {
       return "fast-compile";
@@ -182,7 +182,15 @@ export function BuildTab({ config, setConfig, profileType, setProfileType }: Pro
         </div>
         <div className="form-row">
           <div><div className="form-label">链接时优化 (LTO)</div><div className="form-hint">可显著减小二进制体积</div></div>
-          <select className="select" style={{ width: 180 }} value={String(currentProfile["lto"] ?? "")} onChange={(e) => updateProfile("lto", e.target.value || undefined)}>
+          <select
+            className="select"
+            style={{ width: 180 }}
+            value={String(currentProfile["lto"] ?? "")}
+            onChange={(e) => {
+              const value = e.target.value;
+              updateProfile("lto", value === "" ? undefined : value === "true" ? true : value === "false" ? false : value);
+            }}
+          >
             <option value="">默认</option>
             <option value="false">关闭</option>
             <option value="true">开启</option>
@@ -202,10 +210,9 @@ export function BuildTab({ config, setConfig, profileType, setProfileType }: Pro
           <div><div className="form-label">剥离符号 (Strip)</div><div className="form-hint">移除调试信息减小体积</div></div>
           <select className="select" style={{ width: 180 }} value={String(currentProfile["strip"] ?? "")} onChange={(e) => updateProfile("strip", e.target.value || undefined)}>
             <option value="">默认</option>
-            <option value="true">全部剥离</option>
-            <option value="false">不剥离</option>
+            <option value="symbols">全部剥离</option>
+            <option value="none">不剥离</option>
             <option value="debuginfo">仅调试信息</option>
-            <option value="symbols">仅符号</option>
           </select>
         </div>
         <div className="form-row">
