@@ -1,0 +1,124 @@
+name: Release Windows
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag, for example v1.0.0"
+        required: true
+        default: "v1.0.0"
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-C target-feature=+crt-static"
+
+jobs:
+  build-windows:
+    name: Build ${{ matrix.label }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-pc-windows-msvc
+            label: windows-x64
+          - target: i686-pc-windows-msvc
+            label: windows-win32
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install Rust target
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Build portable executable
+        working-directory: src-tauri
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Package portable zip
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            $tag = "${{ inputs.tag }}"
+          }
+
+          $packageName = "cargo-cfgmate-$tag-for-${{ matrix.label }}"
+          $packageDir = "release\$packageName"
+          New-Item -ItemType Directory -Path $packageDir -Force | Out-Null
+
+          Copy-Item "src-tauri\target\${{ matrix.target }}\release\cargo-cfgmate.exe" "$packageDir\cargo-cfgmate.exe"
+          @(
+            "Cargo CfgMate $tag for ${{ matrix.label }}"
+            ""
+            "Run cargo-cfgmate.exe as administrator."
+            "This portable build uses static MSVC CRT."
+            "Tauri still requires Microsoft Edge WebView2 Runtime, which is normally preinstalled on modern Windows."
+          ) | Set-Content -Encoding UTF8 -Path "$packageDir\README.txt"
+
+          Compress-Archive -Path "$packageDir\*" -DestinationPath "release\$packageName.zip" -Force
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cargo-cfgmate-for-${{ matrix.label }}
+          path: release/*.zip
+
+  publish-release:
+    name: Publish GitHub Release
+    runs-on: ubuntu-latest
+    needs: build-windows
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          TARGET_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          tag="$REF_NAME"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            tag="$INPUT_TAG"
+          fi
+
+          notes="Windows portable builds for Cargo CfgMate.
+
+          Assets:
+          - cargo-cfgmate-${tag}-for-windows-x64.zip
+          - cargo-cfgmate-${tag}-for-windows-win32.zip
+
+          Run cargo-cfgmate.exe as administrator. Microsoft Edge WebView2 Runtime is still required by Tauri and is normally preinstalled on modern Windows."
+
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" dist/*.zip --clobber
+          else
+            gh release create "$tag" dist/*.zip --target "$TARGET_SHA" --title "Cargo CfgMate $tag" --notes "$notes"
+          fi
