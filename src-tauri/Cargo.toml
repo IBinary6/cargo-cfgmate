@@ -1,6 +1,6 @@
 [package]
 name = "cargo-cfgmate"
-version = "1.0.1"
+version = "1.0.2"
 description = "A modern GUI for managing Cargo configuration"
 authors = ["Binary"]
 edition = "2021"

@@ -21,10 +21,47 @@ function Get-WindowsAssetLabel {
     return "windows-win32"
 }
 
-function Invoke-GitHubJson {
-    param([string]$Uri)
+function Get-LatestReleaseTag {
+    $latestUri = "https://github.com/$Repo/releases/latest"
+    $releaseUri = $null
 
-    return Invoke-RestMethod -Uri $Uri -Headers @{ "User-Agent" = $UserAgent }
+    try {
+        $response = Invoke-WebRequest -Uri $latestUri -MaximumRedirection 0 -Headers @{ "User-Agent" = $UserAgent }
+        $releaseUri = $response.BaseResponse.ResponseUri.AbsoluteUri
+    }
+    catch {
+        $response = $_.Exception.Response
+        if (-not $response) {
+            throw
+        }
+
+        $location = $null
+        try {
+            $location = $response.Headers["Location"]
+        }
+        catch {
+        }
+
+        if (-not $location) {
+            try {
+                $location = $response.Headers.Location
+            }
+            catch {
+            }
+        }
+
+        if (-not $location) {
+            throw
+        }
+
+        $releaseUri = [string]$location
+    }
+
+    if ($releaseUri -match "/releases/tag/([^/?#]+)") {
+        return [Uri]::UnescapeDataString($Matches[1])
+    }
+
+    throw "Failed to resolve latest release tag from $releaseUri."
 }
 
 function New-AppShortcut {
@@ -107,28 +144,15 @@ try {
     $assetLabel = Get-WindowsAssetLabel
     Write-Step "Detected $assetLabel."
 
-    $release = Invoke-GitHubJson "https://api.github.com/repos/$Repo/releases/latest"
-    $asset = $release.assets |
-        Where-Object { $_.name -like "*for-$assetLabel.zip" } |
-        Select-Object -First 1
+    $tag = Get-LatestReleaseTag
+    $assetName = "cargo-cfgmate-$tag-for-$assetLabel.zip"
+    $downloadUrl = "https://github.com/$Repo/releases/download/$tag/$assetName"
 
-    if (-not $asset) {
-        throw "No release asset found for $assetLabel in $($release.tag_name)."
-    }
-
-    $zipPath = Join-Path $tempDir $asset.name
+    $zipPath = Join-Path $tempDir $assetName
     $extractDir = Join-Path $tempDir "extract"
 
-    Write-Step "Downloading $($asset.name)."
-    Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zipPath -Headers @{ "User-Agent" = $UserAgent }
-
-    if ($asset.digest -and $asset.digest -like "sha256:*") {
-        $expectedHash = $asset.digest.Substring("sha256:".Length).ToLowerInvariant()
-        $actualHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $zipPath).Hash.ToLowerInvariant()
-        if ($actualHash -ne $expectedHash) {
-            throw "SHA256 mismatch for $($asset.name)."
-        }
-    }
+    Write-Step "Downloading $assetName."
+    Invoke-WebRequest -Uri $downloadUrl -OutFile $zipPath -Headers @{ "User-Agent" = $UserAgent }
 
     Write-Step "Extracting package."
     Expand-Archive -LiteralPath $zipPath -DestinationPath $extractDir -Force
@@ -156,7 +180,7 @@ try {
         New-AppShortcut -ShortcutPath $desktopShortcut -TargetPath $installedExe -WorkingDirectory $InstallDir
     }
 
-    Write-Step "Installed $AppName $($release.tag_name)."
+    Write-Step "Installed $AppName $tag."
 
     if ($env:CARGO_CFGMATE_NO_LAUNCH -ne "1") {
         Write-Step "Starting $AppName. Windows may ask for administrator permission."
