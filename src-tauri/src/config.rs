@@ -1357,6 +1357,39 @@ mod tests {
         assert!(config.source.is_none());
         assert!(!path.exists());
     }
+
+    /// 验证用户明确保存时会创建不存在的配置文件和父目录。
+    ///
+    /// ```ignore
+    /// save_config(&config, Some("new/.cargo/config.toml")).unwrap();
+    /// assert!(std::path::Path::new("new/.cargo/config.toml").exists());
+    /// ```
+    #[test]
+    fn save_missing_config_creates_file() {
+        let root = std::env::temp_dir().join(format!(
+            "cargo-cfgmate-save-{}",
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let path = root.join(".cargo").join("config.toml");
+        let config = CargoConfig {
+            build: Some(BuildConfig {
+                jobs: Some(4),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+
+        save_config(&config, path.to_str()).unwrap();
+
+        assert!(path.is_file());
+        let loaded = load_config(path.to_str()).unwrap();
+        assert_eq!(loaded.build.and_then(|build| build.jobs), Some(4));
+
+        fs::remove_dir_all(&root).unwrap();
+    }
 }
 
 pub fn rename_backup(
