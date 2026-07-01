@@ -66,6 +66,7 @@ function App() {
   const confirmResolver = useRef<((value: boolean) => void) | null>(null);
   const dirtyRef = useRef(false);
   const allowCloseRef = useRef(false);
+  const activeTabLoadedRef = useRef(false);
 
   const showToast = (message: string, type: "success" | "error" = "success") => {
     const title = type === "success" ? "操作成功" : "操作失败";
@@ -130,6 +131,10 @@ function App() {
 
   // 持久化 activeTab
   useEffect(() => {
+    if (!activeTabLoadedRef.current) {
+      activeTabLoadedRef.current = true;
+      return;
+    }
     store.set("lastActiveTab", activeTab);
   }, [activeTab]);
 
@@ -162,9 +167,6 @@ function App() {
       const resolvedPath = normalizedStored && !isSamePath(normalizedStored, defaultPath)
         ? normalizedStored
         : defaultPath;
-      if (normalizedStored && isSamePath(normalizedStored, defaultPath)) {
-        store.set("configPathOverride", "");
-      }
       setConfigPath(resolvedPath);
       return resolvedPath;
     } catch (e) {
