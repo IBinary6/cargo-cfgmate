@@ -428,7 +428,7 @@ function App() {
             Cargo CfgMate
           </h1>
           <p style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: 4 }}>
-            Rust 配置助手 v1.0.0
+            Rust 配置助手 v1.0.1
           </p>
         </div>
         
