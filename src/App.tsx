@@ -118,7 +118,7 @@ function App() {
     const init = async () => {
       await loadAdminStatus();
       const resolvedPath = await loadConfigPath();
-      await loadConfig(resolvedPath);
+      await loadConfig(resolvedPath, { notify: false });
       await loadCurrentTarget();
     };
     init();
@@ -304,7 +304,7 @@ function App() {
     };
   }, [confirmAction, forceCloseWindow]);
 
-  async function loadConfig(pathOverride?: string) {
+  async function loadConfig(pathOverride?: string, options: { notify?: boolean } = {}) {
     setLoading(true);
     try {
       const resolvedPath = pathOverride || configPath || undefined;
@@ -312,7 +312,9 @@ function App() {
       setConfig(c);
       setSavedSnapshot(stableStringify(c));
       setHasSnapshot(true);
-      showToast("配置已加载", "success");
+      if (options.notify !== false) {
+        showToast("配置已加载", "success");
+      }
     } catch (e) {
       showToast("加载失败: " + e, "error");
     } finally {

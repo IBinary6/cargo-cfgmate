@@ -415,28 +415,13 @@ fn atomic_write(path: &Path, content: &str) -> Result<(), String> {
     }
 }
 
-fn ensure_config_file(path: &Path) -> Result<(), String> {
-    if path.exists() {
-        if path.is_file() {
-            return Ok(());
-        }
-        return Err("配置路径不是文件".to_string());
-    }
-
-    if let Some(parent) = path.parent() {
-        if !parent.exists() {
-            fs::create_dir_all(parent).map_err(|e| format!("Failed to create directory: {}", e))?;
-        }
-    }
-
-    fs::write(path, "").map_err(|e| format!("Failed to create config file: {}", e))
-}
-
 pub fn load_config(path_override: Option<&str>) -> Result<CargoConfig, String> {
     let path = resolve_config_path(path_override);
     if !path.exists() {
-        ensure_config_file(&path)?;
         return Ok(CargoConfig::default());
+    }
+    if !path.is_file() {
+        return Err("配置路径不是文件".to_string());
     }
     let content = fs::read_to_string(&path).map_err(|e| format!("Failed to read config: {}", e))?;
     if content.trim().is_empty() {
@@ -1341,6 +1326,37 @@ pub fn delete_backup(config_path: Option<&str>, name: String) -> Result<(), Stri
 
     fs::remove_file(&backup_path).map_err(|e| format!("Failed to delete backup: {}", e))?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// 验证首次加载不存在的配置时只返回默认配置，不创建文件。
+    ///
+    /// ```ignore
+    /// let config = load_config(Some("missing-config.toml")).unwrap();
+    /// assert!(config.source.is_none());
+    /// ```
+    #[test]
+    fn load_missing_config_does_not_create_file() {
+        let path = std::env::temp_dir().join(format!(
+            "cargo-cfgmate-missing-{}.toml",
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+
+        if path.exists() {
+            fs::remove_file(&path).unwrap();
+        }
+
+        let config = load_config(path.to_str()).unwrap();
+
+        assert!(config.source.is_none());
+        assert!(!path.exists());
+    }
 }
 
 pub fn rename_backup(
