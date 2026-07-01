@@ -112,6 +112,9 @@ jobs:
 
           notes="Windows portable builds for Cargo CfgMate.
 
+          One-line install:
+          powershell -NoProfile -ExecutionPolicy Bypass -Command \"irm https://raw.githubusercontent.com/IBinary6/cargo-cfgmate/master/install.ps1 | iex\"
+
           Assets:
           - cargo-cfgmate-${tag}-for-windows-x64.zip
           - cargo-cfgmate-${tag}-for-windows-win32.zip

@@ -44,13 +44,23 @@
 
 ## 🛠️ 安装与运行
 
-### 方式一：下载发布版 (Windows)
+### 方式一：一行命令安装 (Windows)
+
+在 PowerShell 中运行：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/IBinary6/cargo-cfgmate/master/install.ps1 | iex"
+```
+
+脚本会自动识别 `windows-x64` / `windows-win32`，下载最新 Release，安装到当前用户目录，并创建快捷方式。程序启动时仍会按 manifest 请求管理员权限。
+
+### 方式二：手动下载发布版 (Windows)
 
 1. 前往 [Releases](https://github.com/IBinary6/cargo-cfgmate/releases) 页面下载最新版安装包或可执行文件。
 2. 根据系统选择 `for-windows-x64` 或 `for-windows-win32` 的 portable zip。
 3. 解压后以管理员身份运行 `cargo-cfgmate.exe`。
 
-### 方式二：从源码编译
+### 方式三：从源码编译
 
 确保已安装 Rust 和 Node.js。
 
