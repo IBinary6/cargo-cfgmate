@@ -46,7 +46,7 @@
 
 ### 方式一：下载发布版 (Windows)
 
-1. 前往 [Releases](https://github.com/yourusername/cargo-cfgmate/releases) 页面下载最新版安装包或可执行文件。
+1. 前往 [Releases](https://github.com/IBinary6/cargo-cfgmate/releases) 页面下载最新版安装包或可执行文件。
 2. 根据系统选择 `for-windows-x64` 或 `for-windows-win32` 的 portable zip。
 3. 解压后以管理员身份运行 `cargo-cfgmate.exe`。
 
@@ -56,7 +56,7 @@
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/yourusername/cargo-cfgmate.git
+git clone https://github.com/IBinary6/cargo-cfgmate.git
 cd cargo-cfgmate
 
 # 2. 安装前端依赖
