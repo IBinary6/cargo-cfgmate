@@ -23,41 +23,18 @@ function Get-WindowsAssetLabel {
 
 function Get-LatestReleaseTag {
     $latestUri = "https://github.com/$Repo/releases/latest"
+    $response = Invoke-WebRequest -Uri $latestUri -UseBasicParsing -MaximumRedirection 10 -Headers @{ "User-Agent" = $UserAgent }
     $releaseUri = $null
 
-    try {
-        $response = Invoke-WebRequest -Uri $latestUri -MaximumRedirection 0 -Headers @{ "User-Agent" = $UserAgent }
+    if ($response.BaseResponse.ResponseUri) {
         $releaseUri = $response.BaseResponse.ResponseUri.AbsoluteUri
     }
-    catch {
-        $response = $_.Exception.Response
-        if (-not $response) {
-            throw
-        }
 
-        $location = $null
-        try {
-            $location = $response.Headers["Location"]
-        }
-        catch {
-        }
-
-        if (-not $location) {
-            try {
-                $location = $response.Headers.Location
-            }
-            catch {
-            }
-        }
-
-        if (-not $location) {
-            throw
-        }
-
-        $releaseUri = [string]$location
+    if (-not $releaseUri -and $response.BaseResponse.RequestMessage -and $response.BaseResponse.RequestMessage.RequestUri) {
+        $releaseUri = $response.BaseResponse.RequestMessage.RequestUri.AbsoluteUri
     }
 
-    if ($releaseUri -match "/releases/tag/([^/?#]+)") {
+    if ($releaseUri -and $releaseUri -match "/releases/tag/([^/?#]+)") {
         return [Uri]::UnescapeDataString($Matches[1])
     }
 
